@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Jimpitan — Karang Taruna</title>
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏮</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- ===================== LOGIN ===================== -->
+  <div id="screen-login" class="screen-auth hidden">
+    <div class="auth-card">
+      <div class="auth-emblem"></div>
+      <h1 class="auth-title">Jimpitan</h1>
+      <p class="auth-sub">Karang Taruna <span id="orgNameLabel">—</span></p>
+
+      <div id="loginError" class="auth-error hidden"></div>
+
+      <form id="loginForm" class="auth-form">
+        <label class="field">
+          <span>Email</span>
+          <input type="email" id="loginEmail" required autocomplete="username" placeholder="nama@desa.id" />
+        </label>
+        <label class="field">
+          <span>Kata sandi</span>
+          <input type="password" id="loginPassword" required autocomplete="current-password" placeholder="••••••••" />
+        </label>
+        <button type="submit" class="btn btn-primary btn-block">Masuk</button>
+      </form>
+
+      <button id="showRegister" class="link-btn">Belum punya akun petugas? Daftar</button>
+
+      <form id="registerForm" class="auth-form hidden">
+        <label class="field">
+          <span>Nama petugas</span>
+          <input type="text" id="regName" required placeholder="Nama lengkap" />
+        </label>
+        <label class="field">
+          <span>Email</span>
+          <input type="email" id="regEmail" required placeholder="nama@desa.id" />
+        </label>
+        <label class="field">
+          <span>Kata sandi</span>
+          <input type="password" id="regPassword" required minlength="6" placeholder="Minimal 6 karakter" />
+        </label>
+        <button type="submit" class="btn btn-primary btn-block">Daftar</button>
+      </form>
+      <button id="showLogin" class="link-btn hidden">Sudah punya akun? Masuk</button>
+
+      <p class="auth-hint">Hubungi bendahara/admin jika lupa kata sandi.</p>
+    </div>
+  </div>
+
+  <!-- ===================== APP SHELL ===================== -->
+  <div id="app" class="app hidden">
+
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="topbar-title">
+          <span id="screenTitle">Jimpitan</span>
+          <small id="screenSub">Karang Taruna</small>
+        </div>
+        <button id="btnLogout" class="icon-btn" title="Keluar">⎋</button>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <!-- ---------- DASHBOARD ---------- -->
+      <section id="screen-dashboard" class="screen">
+        <div class="hero-card">
+          <span class="hero-label">Kas terkumpul bulan ini</span>
+          <span class="hero-amount" id="dashTotalBulan">Rp 0</span>
+          <div class="hero-row">
+            <div><strong id="dashHariIni">Rp 0</strong><span>hari ini</span></div>
+            <div><strong id="dashRumahCount">0</strong><span>rumah terdaftar</span></div>
+            <div><strong id="dashTerlewat">0</strong><span>rumah terlewat</span></div>
+          </div>
+        </div>
+
+        <button id="btnGoScan" class="scan-cta">
+          <span class="scan-cta-icon">▣</span>
+          <span>
+            <strong>Scan Jimpitan</strong>
+            <small>Pindai QR di rumah warga</small>
+          </span>
+        </button>
+
+        <h2 class="section-heading">Aktivitas terbaru</h2>
+        <ul id="dashRecentList" class="ledger-list"></ul>
+        <p id="dashEmptyState" class="empty-state hidden">Belum ada catatan jimpitan. Mulai dengan menambah rumah, lalu
+          pindai QR-nya.</p>
+      </section>
+
+      <!-- ---------- DAFTAR RUMAH ---------- -->
+      <section id="screen-rumah" class="screen">
+        <div class="search-row">
+          <input type="search" id="searchRumah" placeholder="Cari nama rumah..." />
+          <span id="rumahCountLabel" class="count-pill">0 rumah</span>
+        </div>
+        <ul id="rumahList" class="ledger-list"></ul>
+        <p id="rumahEmptyState" class="empty-state hidden">Belum ada rumah terdaftar. Ketuk tombol + untuk menambah
+          rumah pertama.</p>
+        <button id="btnGoTambahRumah" class="fab" title="Tambah rumah">+</button>
+      </section>
+
+      <!-- ---------- DETAIL RUMAH ---------- -->
+      <section id="screen-detail-rumah" class="screen">
+        <button class="back-btn" data-back="rumah">← Daftar Rumah</button>
+        <div class="detail-head">
+          <h2 id="detailNama">—</h2>
+          <p id="detailMeta">—</p>
+          <button id="btnLihatQR" class="btn btn-ghost btn-sm">Lihat QR rumah ini</button>
+        </div>
+        <div class="month-row">
+          <button id="detailPrevMonth" class="icon-btn">‹</button>
+          <strong id="detailMonthLabel">—</strong>
+          <button id="detailNextMonth" class="icon-btn">›</button>
+        </div>
+        <ul id="detailDayList" class="ledger-list"></ul>
+      </section>
+
+      <!-- ---------- TAMBAH RUMAH ---------- -->
+      <section id="screen-tambah-rumah" class="screen">
+        <button class="back-btn" data-back="rumah">← Daftar Rumah</button>
+        <h2 class="section-heading">Tambah rumah</h2>
+        <form id="tambahRumahForm" class="stack-form">
+          <label class="field">
+            <span>Nama kepala keluarga / rumah</span>
+            <input type="text" id="frNama" required placeholder="cth. Wiyono" />
+          </label>
+          <div class="field-pair">
+            <label class="field">
+              <span>RT</span>
+              <input type="text" id="frRT" required placeholder="01" />
+            </label>
+            <label class="field">
+              <span>RW</span>
+              <input type="text" id="frRW" required placeholder="06" />
+            </label>
+          </div>
+          <label class="field">
+            <span>Tarif jimpitan harian (Rp)</span>
+            <input type="number" id="frTarif" required value="1000" min="0" step="100" />
+          </label>
+          <button type="submit" class="btn btn-primary btn-block">Simpan &amp; buat QR</button>
+        </form>
+      </section>
+
+      <!-- ---------- QR RUMAH ---------- -->
+      <section id="screen-qr" class="screen">
+        <button class="back-btn" data-back="rumah">← Daftar Rumah</button>
+        <div class="qr-card">
+          <p class="qr-label">QR JIMPITAN</p>
+          <h2 id="qrNama">—</h2>
+          <p id="qrMeta">—</p>
+          <div id="qrCanvasWrap" class="qr-canvas-wrap"></div>
+          <p class="qr-hint">Tempel di depan rumah. Petugas memindai ini setiap malam.</p>
+          <div class="qr-actions">
+            <button id="btnUnduhQR" class="btn btn-secondary btn-sm">Unduh PNG</button>
+            <button id="btnCetakQR" class="btn btn-ghost btn-sm">Cetak</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- SCAN ---------- -->
+      <section id="screen-scan" class="screen">
+        <h2 class="section-heading">Scan Jimpitan</h2>
+        <p class="muted-p">Arahkan kamera ke QR yang tertempel di rumah warga.</p>
+        <div id="qrReaderWrap" class="qr-reader-wrap">
+          <div id="qrReader"></div>
+        </div>
+        <div id="scanFallback" class="scan-fallback hidden">
+          <p>Kamera tidak tersedia di perangkat ini.</p>
+          <label class="field">
+            <span>Pilih rumah manual</span>
+            <select id="manualHouseSelect"></select>
+          </label>
+          <button id="btnManualConfirm" class="btn btn-primary btn-block">Lanjutkan</button>
+        </div>
+      </section>
+
+      <!-- ---------- REKAP PETUGAS ---------- -->
+      <section id="screen-rekap" class="screen">
+        <h2 class="section-heading">Rekap Petugas</h2>
+        <div class="month-row">
+          <button id="rekapPrevMonth" class="icon-btn">‹</button>
+          <strong id="rekapMonthLabel">—</strong>
+          <button id="rekapNextMonth" class="icon-btn">›</button>
+        </div>
+        <div class="rekap-stats">
+          <div class="rekap-stat"><small>Transaksi</small><strong id="rekapTransaksi">0</strong></div>
+          <div class="rekap-stat"><small>Rumah tercatat</small><strong id="rekapRumah">0</strong></div>
+          <div class="rekap-stat rekap-stat-wide"><small>Total nominal</small><strong id="rekapNominal">Rp 0</strong>
+          </div>
+        </div>
+        <ul id="rekapPetugasList" class="ledger-list"></ul>
+        <p id="rekapEmptyState" class="empty-state hidden">Belum ada transaksi pada periode ini.</p>
+      </section>
+
+    </main>
+
+    <nav class="bottomnav">
+      <button class="nav-btn" data-screen="dashboard"><span>⌂</span>Beranda</button>
+      <button class="nav-btn" data-screen="rumah"><span>▤</span>Rumah</button>
+      <button class="nav-btn nav-btn-scan" data-screen="scan"><span>▣</span>Scan</button>
+      <button class="nav-btn" data-screen="rekap"><span>◔</span>Rekap</button>
+    </nav>
+  </div>
+
+  <!-- ---------- MODAL KONFIRMASI PENGAMBILAN ---------- -->
+  <div id="modalKonfirmasi" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>Konfirmasi Pengambilan</h3>
+        <button id="btnCloseModal" class="icon-btn">×</button>
+      </div>
+      <p class="modal-house-name" id="modalHouseName">—</p>
+      <p class="modal-house-meta" id="modalHouseMeta">—</p>
+
+      <label class="field">
+        <span>Jumlah hari yang diambil</span>
+        <div class="stepper">
+          <button type="button" id="stepMinus" class="stepper-btn">−</button>
+          <span id="stepValue">1</span>
+          <button type="button" id="stepPlus" class="stepper-btn">+</button>
+        </div>
+      </label>
+
+      <div class="modal-total">
+        <span>Total jimpitan</span>
+        <strong id="modalTotal">Rp 0</strong>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btnBatalModal" class="btn btn-ghost">Batal</button>
+        <button id="btnSimpanModal" class="btn btn-primary">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+
+</html>
