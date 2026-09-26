@@ -27,13 +27,12 @@ const firebaseConfig = {
   appId: "1:271373093472:web:0471ad3900464664c55105"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
 const ORG_NAME = "Ngudi Kamulyan"; // nama karang taruna / RT-RW Anda
 
 document.getElementById("orgNameLabel").textContent = ORG_NAME;
 document.getElementById("screenSub").textContent = "Karang Taruna " + ORG_NAME;
 
+// Initialize Firebase (sekali saja)
 const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
@@ -225,9 +224,14 @@ async function getEntriesForRange(fromDate, toDate) {
 
 // status rumah: Lancar jika kemarin ada entri, Terlewat jika tidak
 async function computeStatus(houseId) {
-  const y = new Date(); y.setDate(y.getDate() - 1);
-  const entries = await getEntriesForHouse(houseId, y, y);
-  return entries.length > 0 ? "Lancar" : "Terlewat";
+  try {
+    const y = new Date(); y.setDate(y.getDate() - 1);
+    const entries = await getEntriesForHouse(houseId, y, y);
+    return entries.length > 0 ? "Lancar" : "Terlewat";
+  } catch (err) {
+    console.warn("computeStatus error untuk rumah", houseId, err);
+    return "—";
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -281,28 +285,45 @@ async function renderDashboard() {
 document.getElementById("searchRumah").addEventListener("input", renderRumahList);
 
 async function renderRumahList() {
-  const term = document.getElementById("searchRumah").value.trim().toLowerCase();
-  const filtered = houses.filter((h) => h.nama.toLowerCase().includes(term));
-  document.getElementById("rumahCountLabel").textContent = `${houses.length} rumah`;
+  try {
+    const term = document.getElementById("searchRumah").value.trim().toLowerCase();
+    const filtered = houses.filter((h) => (h.nama || "").toLowerCase().includes(term));
+    document.getElementById("rumahCountLabel").textContent = `${houses.length} rumah`;
 
-  const list = document.getElementById("rumahList");
-  const empty = document.getElementById("rumahEmptyState");
-  list.innerHTML = "";
-  empty.classList.toggle("hidden", houses.length > 0);
+    const list = document.getElementById("rumahList");
+    const empty = document.getElementById("rumahEmptyState");
+    list.innerHTML = "";
+    empty.classList.toggle("hidden", filtered.length > 0);
 
-  for (const h of filtered) {
-    const status = await computeStatus(h.id);
-    const li = document.createElement("li");
-    li.className = "ledger-row";
-    li.innerHTML = `
-      <span class="ledger-icon">⌂</span>
-      <span class="ledger-main">
-        <strong>${escapeHtml(h.nama)}</strong>
-        <small>RT ${escapeHtml(h.rt)} / RW ${escapeHtml(h.rw)} · ${RP(h.tarif)}/hari</small>
-      </span>
-      <span class="badge ${status === "Lancar" ? "badge-good" : "badge-bad"}">${status}</span>`;
-    li.addEventListener("click", () => openDetailRumah(h.id));
-    list.appendChild(li);
+    // Render dulu semua rumah tanpa status (agar langsung muncul)
+    const rows = [];
+    for (const h of filtered) {
+      const li = document.createElement("li");
+      li.className = "ledger-row";
+      li.innerHTML = `
+        <span class="ledger-icon">⌂</span>
+        <span class="ledger-main">
+          <strong>${escapeHtml(h.nama)}</strong>
+          <small>RT ${escapeHtml(h.rt || "—")} / RW ${escapeHtml(h.rw || "—")} · ${RP(h.tarif)}/hari</small>
+        </span>
+        <span class="badge badge-neutral" data-house-status="${h.id}">…</span>`;
+      li.addEventListener("click", () => openDetailRumah(h.id));
+      list.appendChild(li);
+      rows.push(h);
+    }
+
+    // Kemudian update status secara async (tidak blocking tampilan)
+    for (const h of rows) {
+      computeStatus(h.id).then((status) => {
+        const badge = list.querySelector(`[data-house-status="${h.id}"]`);
+        if (badge) {
+          badge.textContent = status;
+          badge.className = `badge ${status === "Lancar" ? "badge-good" : status === "Terlewat" ? "badge-bad" : "badge-neutral"}`;
+        }
+      });
+    }
+  } catch (err) {
+    console.error("renderRumahList error:", err);
   }
 }
 
